@@ -1,9 +1,11 @@
-import json
 import tormysql
+import requests
 from tornado.web import *
 from tornado.template import *
+from dotenv import load_dotenv
 from tornado.ioloop import IOLoop
 
+load_dotenv('.env')
 MAX_WORKERS = 16
 POOL = tormysql.ConnectionPool(
     max_connections=64,
@@ -31,8 +33,9 @@ class Index(RequestHandler):
 
 
 class User(RequestHandler):
+    @staticmethod
     @gen.coroutine
-    def get_user_from_db(self):
+    def get_user_from_db():
         con = yield POOL.Connection()
         cur = con.cursor()
         yield cur.execute('SELECT * FROM users ORDER BY RAND() LIMIT 1')
@@ -41,10 +44,39 @@ class User(RequestHandler):
         yield con.close()
         return dict(zip(USERS_FIELDS, data))
 
+    @staticmethod
+    @gen.coroutine
+    def add_new_users(n=5):
+        c = 0
+        con = yield POOL.Connection()
+        cur = con.cursor()
+        while c < n:
+            response = requests.get('https://randomuser.me/api/?results=5').json().get('results')
+            print('request')
+            for user in response:
+                name = (user['name']['first'] + ' ' + user['name']['last'])
+                if 'r' not in name.lower():
+                    email = user['email']
+                    gender = int(user['gender'] == 'male')
+                    location = ', '.join([
+                        str(user['location']['postcode']),
+                        user['location']['country'],
+                        user['location']['state'],
+                        user['location']['city']
+                    ])
+                    yield cur.execute('INSERT INTO users (name, email, gender, location) VALUES(%s, %s, %s, %s)',
+                                      (name, email, gender, location))
+                    c += 1
+        yield con.commit()
+        yield cur.close()
+        yield con.close()
+        return 1
+
     @gen.coroutine
     def get(self):
         self.set_header('Content-Type', 'application/json')
         data = yield self.get_user_from_db()
+        yield self.add_new_users(5)
         self.write(data)
 
     @gen.coroutine
@@ -56,7 +88,6 @@ application = Application([
     ('^/', Index),
     ('^/user/?$', User),
 ])
-
 
 if __name__ == '__main__':
     application.loop = IOLoop.current()
