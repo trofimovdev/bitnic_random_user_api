@@ -1,9 +1,9 @@
 import tormysql
 import requests
 from tornado.web import *
+from tornado.ioloop import *
 from tornado.template import *
 from dotenv import load_dotenv
-from tornado.ioloop import *
 
 load_dotenv('.env')
 MAX_WORKERS = 16
@@ -12,6 +12,7 @@ POOL = tormysql.ConnectionPool(
     idle_seconds=7200,
     wait_connection_timeout=3,
     host=os.environ.get('MYSQL_HOST'),
+    port=int(os.environ.get('MYSQL_PORT')),
     user=os.environ.get('MYSQL_USER'),
     passwd=os.environ.get('MYSQL_PASSWORD'),
     db='db',
@@ -95,11 +96,10 @@ application = Application([
     ('^/', Index),
     ('^/user/?$', User),
     ('/(.*)', StaticFileHandler, {'path': 'template/'})
-    if os.environ.get('PORT') is None
-    else ('', None)  # Make nginx work instead of poor Tornado
 ])
 
 if __name__ == '__main__':
+    print('Start server...')
     application.loop = IOLoop.current()
-    application.listen(os.environ.get('PORT', 5000))
+    application.listen(5000)
     application.loop.start()

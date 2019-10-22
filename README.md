@@ -1,0 +1,1 @@
+# Random User [![Codacy Badge](https://api.codacy.com/project/badge/Grade/4f706e62fc92423c8dcf8e9a5f44bcd5)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=bixnel/bitnic_random_user_api&amp;utm_campaign=Badge_Grade)
