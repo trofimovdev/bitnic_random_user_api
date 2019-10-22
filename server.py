@@ -27,8 +27,9 @@ USERS_FIELDS = [
 
 
 class Index(RequestHandler):
+    @staticmethod
     @gen.coroutine
-    def generate_page(self):
+    def generate_page():
         return Loader('template')\
             .load('index.html')\
             .generate()
@@ -40,8 +41,9 @@ class Index(RequestHandler):
 
 
 class User(RequestHandler):
+    @staticmethod
     @gen.coroutine
-    def get_user_from_db(self):
+    def get_user_from_db():
         con = yield POOL.Connection()
         cur = con.cursor()
         yield cur.execute('SELECT * FROM users ORDER BY RAND() LIMIT 1')
@@ -50,8 +52,9 @@ class User(RequestHandler):
         yield con.close()
         return dict(zip(USERS_FIELDS, data))
 
+    @staticmethod
     @gen.coroutine
-    def add_new_users(self, n=5):
+    def add_new_users(n=5):
         c = 0
         con = yield POOL.Connection()
         cur = con.cursor()
@@ -75,7 +78,6 @@ class User(RequestHandler):
         yield con.commit()
         yield cur.close()
         yield con.close()
-        return 1
 
     @gen.coroutine
     def get(self):
@@ -85,7 +87,7 @@ class User(RequestHandler):
 
     @gen.coroutine
     def put(self):
-        yield self.add_new_users(5)
+        yield self.add_new_users()
         self.finish()
 
 
