@@ -99,5 +99,5 @@ application = Application([
 
 if __name__ == '__main__':
     application.loop = IOLoop.current()
-    application.listen(os.environ.get('PORT', 5000), address='0.0.0.0')
+    application.listen(os.environ.get('PORT', 5000))
     application.loop.start()

@@ -13,7 +13,6 @@
             httpRequest = new XMLHttpRequest();
             httpRequest.open('GET', 'user');
             httpRequest.onreadystatechange = function(){
-                // Process the server response here.
                 if (httpRequest.readyState === XMLHttpRequest.DONE) {
                     if (httpRequest.status === 200) {
                         let response = JSON.parse(httpRequest.responseText);
@@ -26,11 +25,28 @@
                         document.getElementById('email').innerHTML = response.email;
                         document.getElementById('location').innerHTML = response.location;
                     } else {
-                        alert('There was a problem with the request.');
+                        alert('Возникла проблема.');
                     }
                 }
             }
             httpRequest.send();
+
+            function addNewUsers() {
+                httpRequest = new XMLHttpRequest();
+                httpRequest.open('PUT', 'user');
+                httpRequest.onreadystatechange = function(){
+                    if (httpRequest.readyState === XMLHttpRequest.DONE) {
+                        if (httpRequest.status === 200) {
+                            alert('5 пользователей без R в имени успешно занесены в базу.');
+                        } else {
+                            alert('Возникла проблема.');
+                        }
+                        document.getElementById('add_block').innerHTML = 'Добавить еще 5 пользователей в базу';
+                    }
+                }
+                httpRequest.send();
+                document.getElementById('add_block').innerHTML = 'Подождите...';
+            }
         </script>
         <div class='wrapper'>
             <div class='user_block'>
@@ -40,6 +56,9 @@
                     <li id='email'></li>
                     <li id='location'></li>
                 </ul>
+            </div>
+            <div class='add_block' onclick='addNewUsers()' id='add_block'>
+                Добавить еще 5 пользователей в базу
             </div>
         </div>
     </body>
