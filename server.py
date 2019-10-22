@@ -3,7 +3,7 @@ import requests
 from tornado.web import *
 from tornado.template import *
 from dotenv import load_dotenv
-from tornado.ioloop import IOLoop
+from tornado.ioloop import *
 
 load_dotenv('.env')
 MAX_WORKERS = 16
@@ -28,14 +28,20 @@ USERS_FIELDS = [
 
 class Index(RequestHandler):
     @gen.coroutine
+    def generate_page(self):
+        return Loader('template')\
+            .load('index.html')\
+            .generate()
+
+    @gen.coroutine
     def get(self):
-        self.write('Hello, World!')
+        page = yield self.generate_page()
+        self.write(page)
 
 
 class User(RequestHandler):
-    @staticmethod
     @gen.coroutine
-    def get_user_from_db():
+    def get_user_from_db(self):
         con = yield POOL.Connection()
         cur = con.cursor()
         yield cur.execute('SELECT * FROM users ORDER BY RAND() LIMIT 1')
@@ -44,9 +50,8 @@ class User(RequestHandler):
         yield con.close()
         return dict(zip(USERS_FIELDS, data))
 
-    @staticmethod
     @gen.coroutine
-    def add_new_users(n=5):
+    def add_new_users(self, n=5):
         c = 0
         con = yield POOL.Connection()
         cur = con.cursor()
@@ -76,20 +81,23 @@ class User(RequestHandler):
     def get(self):
         self.set_header('Content-Type', 'application/json')
         data = yield self.get_user_from_db()
-        yield self.add_new_users(5)
         self.write(data)
 
     @gen.coroutine
     def put(self):
-        pass
+        yield self.add_new_users(5)
+        self.finish()
 
 
 application = Application([
     ('^/', Index),
     ('^/user/?$', User),
+    ('/(.*)', StaticFileHandler, {'path': 'template/'})
+    if os.environ.get('PORT') is None
+    else ('', None)  # Make nginx work instead of poor Tornado
 ])
 
 if __name__ == '__main__':
     application.loop = IOLoop.current()
-    application.listen(os.environ.get('PORT', 5000))
+    application.listen(os.environ.get('PORT', 5000), address='0.0.0.0')
     application.loop.start()

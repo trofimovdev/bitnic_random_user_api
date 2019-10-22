@@ -29,3 +29,6 @@ var/
 
 # Env file with variable
 .env
+
+# Node Modules
+node_modules/
